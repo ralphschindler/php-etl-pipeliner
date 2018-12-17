@@ -1,0 +1,22 @@
+{
+    "name": "ralphschindler/etl-pipeliner",
+    "description": "",
+    "type": "library",
+    "license": "UNLICENSE",
+    "authors": [
+        {
+            "name": "Ralph Schindler",
+            "email": "ralph@ralphschindler.com"
+        }
+    ],
+    "require": {
+        "php": "^7.0"
+    },
+    "require-dev": {
+        "illuminate/database": "~5.7",
+        "phpunit/phpunit": "^7.5"
+    },
+    "autoload": {
+        "psr-4": {"ETLPipliner\\": "src/ETLPipeliner"}
+    }
+}
