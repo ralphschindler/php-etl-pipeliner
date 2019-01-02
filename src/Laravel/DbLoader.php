@@ -143,10 +143,11 @@ class DbLoader extends AbstractLoader
     protected function prepareInsertStatement()
     {
         $columns = collect($this->columns);
+        $grammar = $this->connection->getQueryGrammar();
 
         $this->insertStatement = $this->connection->getPdo()->prepare(
             "INSERT INTO {$this->table} ("
-            . $columns->map(function ($column) { return $this->connection->getQueryGrammar()->wrap($column); })->implode(', ')
+            . $columns->map(function ($column) use ($grammar) { return $grammar->wrap($column); })->implode(', ')
             . ') VALUES ('
             . $columns->map(function ($column) { return ':' . $column; })->implode(', ')
             . ')'
@@ -174,7 +175,7 @@ class DbLoader extends AbstractLoader
         }
 
         $this->updateStatement = $this->connection->getPdo()->prepare(
-            'UPDATE ' . $grammar->quoteString($table)
+            'UPDATE ' . $grammar->quoteString($this->table)
             . ' SET ' . implode(', ', $sqlSets)
             . ' WHERE ' . implode(' AND ', $sqlWheres)
         );
