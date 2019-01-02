@@ -17,6 +17,6 @@
         "phpunit/phpunit": "^7.5"
     },
     "autoload": {
-        "psr-4": {"ETLPipeliner\\": "src/"}
+        "psr-4": {"EtlPipeliner\\": "src/"}
     }
 }

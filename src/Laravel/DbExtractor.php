@@ -1,9 +1,11 @@
 <?php
 
-namespace ETLPipeliner\Laravel;
+namespace EtlPipeliner\Laravel;
 
-use ETLPipeliner\AbstractExtractor;
+use EtlPipeliner\AbstractExtractor;
 use Illuminate\Database\Connection;
+use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\SqlServerConnection;
 
 class DbExtractor extends AbstractExtractor
 {
@@ -19,7 +21,7 @@ class DbExtractor extends AbstractExtractor
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-        $this->connection->query();
+        $this->query = $this->connection->query();
     }
 
     public function query()
@@ -42,8 +44,66 @@ class DbExtractor extends AbstractExtractor
         // md5 hash of all unique columns concat'd
     }
 
+    public function getChunkSize()
+    {
+        return 1000;
+    }
+
     public function extract($incremental = false): \Generator
     {
-        // TODO: Implement extract() method.
+        $hashedQuery = $this->createHashedQuery();
+        $lastId = null;
+
+        do {
+            $clone = clone $hashedQuery;
+            $results = $clone->forPageAfterId(1000, $lastId, '_hash')->get();
+            $countResults = $results->count();
+
+            if ($countResults == 0) {
+                break;
+            }
+
+            foreach ($results as $result) {
+                yield (array) $result;
+            }
+
+            $lastId = $results->last()->_hash;
+
+            unset($results);
+        } while ($countResults == 1000);
+    }
+
+    protected function createHashedQuery()
+    {
+        $query = clone $this->query;
+
+        if ($this->connection instanceof MySqlConnection) {
+            $query->addSelect(
+                $this->connection->raw(
+                    'MD5(CONCAT_WS("|", '
+                    . collect($this->getUniqueColumns())->implode(', ')
+                    . ')) as `_hash`'
+                )
+            );
+        } elseif ($this->connection instanceof SqlServerConnection) {
+            $query->addSelect(
+                $this->connection->raw(
+                    "LOWER(CONVERT(varchar(32), HASHBYTES('md5', "
+                    . collect($this->getUniqueColumns())
+                        ->map(function ($uniqueColumn) {
+                            return 'CAST(' . $this->connection->getQueryGrammar()->wrap($uniqueColumn) . ' as varchar)';
+                        })
+                        ->implode(" + '|' + ")
+                    . '), 2)) as [_hash]'
+                )
+            );
+        } else {
+            throw new \RuntimeException('Currently only MySQL and SqlServer are supported inside the ' . __CLASS__);
+        }
+
+        $hashedQuery = $this->connection->query();
+        $hashedQuery->fromSub($query, 'source');
+
+        return $query;
     }
 }

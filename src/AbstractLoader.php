@@ -1,6 +1,6 @@
 <?php
 
-namespace ETLPipeliner;
+namespace EtlPipeliner;
 
 abstract class AbstractLoader
 {

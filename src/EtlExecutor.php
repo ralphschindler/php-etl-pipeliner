@@ -1,6 +1,6 @@
 <?php
 
-namespace ETLPipeliner;
+namespace EtlPipeliner;
 
 class EtlExecutor
 {
@@ -12,7 +12,15 @@ class EtlExecutor
         $loader->prepare();
 
         foreach ($extractor->extract($incremental) as $data) {
-            $loader->load($etl->transform($data));
+            $transformed = $etl->transform($data);
+            
+            if ($transformed instanceof \Iterator) {
+                foreach ($transformed as $transformedData) {
+                    $loader->load($transformedData);
+                }
+            } elseif ($transformed !== null) {
+                $loader->load($transformed);
+            }
         }
 
         $loader->cleanup();

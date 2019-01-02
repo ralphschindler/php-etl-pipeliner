@@ -1,16 +1,16 @@
 <?php
 
-namespace ETLPipeliner;
+namespace EtlPipeliner;
 
 abstract class AbstractEtl
 {
-    // build index to process
-
-    // look for deleted items in index (full left and full right)
-
     abstract public function extractor(): AbstractExtractor;
     abstract public function loader(): AbstractLoader;
 
+    /**
+     * @param array $data
+     * @return array|Iterator|null
+     */
     public function transform(array $data)
     {
         return $data;
