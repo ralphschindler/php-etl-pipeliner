@@ -162,7 +162,7 @@ class DbLoader extends AbstractLoader
         $grammar = $this->connection->getQueryGrammar();
 
         foreach ($this->columns as $column) {
-            $partialSql = $grammar->quoteString($column) . " = :{$column}";
+            $partialSql = $grammar->wrap($column) . " = :{$column}";
             if (!in_array($column, $uniqueColumns)) {
                 $sqlSets[] = $partialSql;
             } else {
@@ -175,7 +175,7 @@ class DbLoader extends AbstractLoader
         }
 
         $this->updateStatement = $this->connection->getPdo()->prepare(
-            'UPDATE ' . $grammar->quoteString($this->table)
+            'UPDATE ' . $grammar->wrapTable($this->table)
             . ' SET ' . implode(', ', $sqlSets)
             . ' WHERE ' . implode(' AND ', $sqlWheres)
         );
