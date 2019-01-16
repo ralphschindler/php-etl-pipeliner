@@ -104,6 +104,6 @@ class DbExtractor extends AbstractExtractor
         $hashedQuery = $this->connection->query();
         $hashedQuery->fromSub($query, 'source');
 
-        return $query;
+        return $hashedQuery;
     }
 }
