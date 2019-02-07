@@ -94,8 +94,11 @@ class DbLoader extends AbstractLoader
 
     protected function createIndex()
     {
+        $grammar = $this->connection->getQueryGrammar();
+        $table = $grammar->wrapTable($this->table);
+
         if ($this->connection instanceof MySqlConnection) {
-            $sql = 'SELECT MD5(CONCAT_WS("|", ' . implode(', ', $this->getUniqueColumns()) . ")) as hash FROM {$this->table}";
+            $sql = 'SELECT MD5(CONCAT_WS("|", ' . implode(', ', $this->getUniqueColumns()) . ")) as hash FROM {$table}";
         } else {
             throw new \RuntimeException('Only MySQL currently supported as loader type');
         }
@@ -145,8 +148,10 @@ class DbLoader extends AbstractLoader
         $columns = collect($this->columns);
         $grammar = $this->connection->getQueryGrammar();
 
+        $table = $grammar->wrapTable($this->table);
+
         $this->insertStatement = $this->connection->getPdo()->prepare(
-            "INSERT INTO {$this->table} ("
+            "INSERT INTO {$table} ("
             . $columns->map(function ($column) use ($grammar) { return $grammar->wrap($column); })->implode(', ')
             . ') VALUES ('
             . $columns->map(function ($column) { return ':' . $column; })->implode(', ')
