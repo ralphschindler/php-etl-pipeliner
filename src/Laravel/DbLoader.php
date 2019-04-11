@@ -30,6 +30,10 @@ class DbLoader extends AbstractLoader
     protected $iteration = 0;
     /** @var bool */
     protected $ignoreDuplicates = true;
+    /** @var callable|null */
+    protected $onInsertDataAppender;
+    /** @var callable|null */
+    protected $onUpdateDataAppender;
 
     public function __construct(Connection $connection)
     {
@@ -59,11 +63,21 @@ class DbLoader extends AbstractLoader
         return $this->uniqueColumns;
     }
 
+    public function onInsertDataAppender(callable $onInsertDataAppender)
+    {
+        $this->onInsertDataAppender = $onInsertDataAppender;
+    }
+    
+    public function onUpdateDataAppender(callable $onUpdateDataAppender)
+    {
+        $this->onUpdateDataAppender = $onUpdateDataAppender;
+    }
+    
     public function prepare()
     {
         $this->createIndex();
     }
-
+    
     public function load(array $data)
     {
         $this->iteration++;
@@ -115,6 +129,12 @@ class DbLoader extends AbstractLoader
         }
 
         try {
+            if (is_callable($this->onUpdateDataAppender)) {
+                $data = call_user_func($this->onUpdateDataAppender, $data);
+                if (!is_array($data)) {
+                    throw new \RuntimeException('onUpdateDataAppender() should return an array of $data to insert');
+                }
+            }
             $this->updateStatement->execute($this->createBindingData($data));
         } catch (\Exception $e) {
             throw $e;
@@ -128,6 +148,12 @@ class DbLoader extends AbstractLoader
         }
 
         try {
+            if (is_callable($this->onInsertDataAppender)) {
+                $data = call_user_func($this->onInsertDataAppender, $data);
+                if (!is_array($data)) {
+                    throw new \RuntimeException('onUpdateDataAppender() should return an array of $data to insert');
+                }
+            }
             $this->insertStatement->execute($this->createBindingData($data));
         } catch (\Exception $e) {
             throw $e;
