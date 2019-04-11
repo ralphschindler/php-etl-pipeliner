@@ -15,6 +15,10 @@ class DbLoader extends AbstractLoader
     /** @var array */
     protected $columns;
     /** @var array */
+    protected $columnsForInsertOnly = [];
+    /** @var array */
+    protected $columnsForUpdateOnly = [];
+    /** @var array */
     protected $uniqueColumns = ['id'];
     /** @var string */
     protected $updateColumn = 'updated_at';
@@ -46,9 +50,11 @@ class DbLoader extends AbstractLoader
         return $this;
     }
 
-    public function columns($columns)
+    public function columns(array $columns, array $insertOnlyColumns = [], array $updateOnlyColumns = [])
     {
         $this->columns = $columns;
+        $this->columnsForInsertOnly = $insertOnlyColumns;
+        $this->columnsForUpdateOnly = $updateOnlyColumns;
         return $this;
     }
 
@@ -172,6 +178,11 @@ class DbLoader extends AbstractLoader
     protected function prepareInsertStatement()
     {
         $columns = collect($this->columns);
+
+        if ($this->columnsForInsertOnly) {
+            $columns = $columns->merge($this->columnsForInsertOnly);
+        }
+
         $grammar = $this->connection->getQueryGrammar();
 
         $table = $grammar->wrapTable($this->table);
@@ -192,7 +203,13 @@ class DbLoader extends AbstractLoader
 
         $grammar = $this->connection->getQueryGrammar();
 
-        foreach ($this->columns as $column) {
+        $columns = collect($this->columns);
+
+        if ($this->columnsForInsertOnly) {
+            $columns = $columns->merge($this->columnsForInsertOnly);
+        }
+
+        foreach ($columns as $column) {
             $partialSql = $grammar->wrap($column) . " = :{$column}";
             if (!in_array($column, $uniqueColumns)) {
                 $sqlSets[] = $partialSql;
