@@ -38,6 +38,12 @@ class DbLoader extends AbstractLoader
     protected $onInsertDataAppender;
     /** @var callable|null */
     protected $onUpdateDataAppender;
+    /** @var array */
+    protected $statistics = [
+        'insert_count' => 0,
+        'update_count' => 0,
+        'delete_count' => 0
+    ];
 
     public function __construct(Connection $connection)
     {
@@ -112,6 +118,11 @@ class DbLoader extends AbstractLoader
         }
     }
 
+    public function getStatistics()
+    {
+        return $this->statistics;
+    }
+
     protected function createIndex()
     {
         $grammar = $this->connection->getQueryGrammar();
@@ -141,7 +152,8 @@ class DbLoader extends AbstractLoader
                     throw new \RuntimeException('onUpdateDataAppender() should return an array of $data to insert');
                 }
             }
-            $this->updateStatement->execute($this->createBindingData($data));
+            $this->updateStatement->execute($this->createBindingData($data, array_merge($this->columns, $this->columnsForUpdateOnly)));
+            $this->statistics['update_count'] += $this->updateStatement->rowCount();
         } catch (\Exception $e) {
             throw $e;
         }
@@ -160,16 +172,17 @@ class DbLoader extends AbstractLoader
                     throw new \RuntimeException('onUpdateDataAppender() should return an array of $data to insert');
                 }
             }
-            $this->insertStatement->execute($this->createBindingData($data));
+            $this->insertStatement->execute($this->createBindingData($data, array_merge($this->columns, $this->columnsForInsertOnly)));
+            $this->statistics['insert_count'] += $this->insertStatement->rowCount();
         } catch (\Exception $e) {
             throw $e;
         }
     }
 
-    protected function createBindingData($data)
+    protected function createBindingData($data, $columns)
     {
         $newData = [];
-        foreach ($this->columns as $column) {
+        foreach ($columns as $column) {
             $newData[':' . $column] = $data[$column] ?? null;
         }
         return $newData;
@@ -205,8 +218,8 @@ class DbLoader extends AbstractLoader
 
         $columns = collect($this->columns);
 
-        if ($this->columnsForInsertOnly) {
-            $columns = $columns->merge($this->columnsForInsertOnly);
+        if ($this->columnsForUpdateOnly) {
+            $columns = $columns->merge($this->columnsForUpdateOnly);
         }
 
         foreach ($columns as $column) {

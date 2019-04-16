@@ -13,4 +13,9 @@ abstract class AbstractLoader
     public function cleanup()
     {
     }
+
+    public function getStatistics()
+    {
+        return [];
+    }
 }

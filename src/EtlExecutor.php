@@ -24,5 +24,9 @@ class EtlExecutor
         }
 
         $loader->cleanup();
+
+        return [
+            'loader' => $loader->getStatistics()
+        ];
     }
 }
