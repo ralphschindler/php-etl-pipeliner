@@ -97,6 +97,14 @@ class DbExtractor extends AbstractExtractor
                     . '), 2)) as [_hash]'
                 )
             );
+        } elseif ($this->connection instanceof PostgresConnection) {
+            $query->addSelect(
+                $this->connection->raw(
+                    "MD5(CONCAT_WS('|', "
+                    . collect($this->getUniqueColumns())->implode(',')
+                    . ')) AS "_hash"'
+                )
+            );
         } else {
             throw new \RuntimeException('Currently only MySQL and SqlServer are supported inside the ' . __CLASS__);
         }
