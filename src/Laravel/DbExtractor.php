@@ -5,6 +5,7 @@ namespace EtlPipeliner\Laravel;
 use EtlPipeliner\AbstractExtractor;
 use Illuminate\Database\Connection;
 use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\PostgresConnection;
 use Illuminate\Database\SqlServerConnection;
 
 class DbExtractor extends AbstractExtractor
@@ -106,7 +107,7 @@ class DbExtractor extends AbstractExtractor
                 )
             );
         } else {
-            throw new \RuntimeException('Currently only MySQL and SqlServer are supported inside the ' . __CLASS__);
+            throw new \RuntimeException('Currently only MySQL, Postgres, and SqlServer are supported inside the ' . __CLASS__);
         }
 
         $hashedQuery = $this->connection->query();
