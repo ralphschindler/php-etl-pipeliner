@@ -13,7 +13,7 @@ class EtlExecutor
 
         foreach ($extractor->extract($incremental) as $data) {
             $transformed = $etl->transform($data);
-            
+
             if ($transformed instanceof \Iterator) {
                 foreach ($transformed as $transformedData) {
                     $loader->load($transformedData);
@@ -26,7 +26,8 @@ class EtlExecutor
         $loader->cleanup();
 
         return [
-            'loader' => $loader->getStatistics()
+            'loader' => $loader->getStatistics(),
+            'etl' => $etl->getStatistics()
         ];
     }
 }
